@@ -22,6 +22,7 @@
         <button @click="filter = 'all'">All task</button>
         <button @click="filter = 'like'">Like task</button>
     </div>
+    <div v-if="counterStore.loading">Loading tasks .....</div>
     <div class="tasklist">
         <div v-if="filter === 'all'">
             <div>{{ counterStore.task.length }} task</div>
@@ -29,6 +30,8 @@
                 <div class="task" :style="task.like ? { 'background-color': 'yellow' } : ''">
                     <div>{{ task.id }}</div>
                     <div>{{ task.name }}</div>
+                    <button @click="counterStore.deleteTask(task.id)">Delete</button>
+                    <button :class="task.like ?  'toggleBtn' : ''" @click="counterStore.changeStatus(task.id)">{{ task.like ? "Liked" : "Like" }}</button>
                 </div>
             </div>
         </div>
@@ -38,6 +41,8 @@
                 <div class="task">
                     <div>{{ task.id }}</div>
                     <div>{{ task.name }}</div>
+                    <button @click="counterStore.deleteTask(task.id)">Delete</button>
+                    <button @click="counterStore.changeStatus(task.id)">Liked</button>
                 </div>
             </div>
         </div>
@@ -46,9 +51,12 @@
 <script>
 import { ref } from 'vue';
 import { useCounterStore } from '../stores/stores';
+import { storeToRefs } from 'pinia';
 export default {
     setup() {
         const counterStore = useCounterStore();
+        // const { task, name, loading, likeTask, likeTaskCount } = storeToRefs(counterStore);
+        counterStore.getSsrTasks();
         const filter = ref('all');
         const noInput = ref(false);
         const newTask = ref({
@@ -59,7 +67,7 @@ export default {
         const addNewTask = () => {
             if (newTask.value.id && newTask.value.name && newTask.value.like !== null) {
                 counterStore.addTask({
-                    id: newTask.value.id,
+                    id: /^[0-9]+$/.test(newTask.value.id) ? parseInt(newTask.value.id) : newTask.value.id,
                     name: newTask.value.name,
                     like: newTask.value.like === 'true' ? true : false
                 });
@@ -73,7 +81,7 @@ export default {
             }
         }
         return {
-            counterStore, filter, addNewTask, newTask, noInput
+            counterStore, filter, addNewTask, newTask, noInput, 
         }
     }
 }
@@ -112,4 +120,14 @@ input {
     padding: 5px;
     background-color: aqua;
     margin: 10px 0;
-}</style>
+}
+.task > button {
+    background-color: rgb(21, 211, 69);
+    border: none;
+    cursor: pointer;
+    color: white;
+}
+.task > .toggleBtn {
+    background-color: rgb(175, 177, 14);
+}
+</style>
